@@ -1,4 +1,3 @@
-/* vim: set ai et ts=4 sw=4: */
 #include "stm32f0xx_hal.h"
 #include "st7735.h"
 #include "malloc.h"
@@ -201,69 +200,50 @@ void ST7735_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_
     }
 }
 
-//font.h not included
-//static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint16_t color, uint16_t bgcolor) {
-//    uint32_t i, b, j;
-//
-//    ST7735_SetAddressWindow(x, y, x+font.width-1, y+font.height-1);
-//
-//    for(i = 0; i < font.height; i++) {
-//        b = font.data[(ch - 32) * font.height + i];
-//        for(j = 0; j < font.width; j++) {
-//            if((b << j) & 0x8000)  {
-//                uint8_t data[] = { color >> 8, color & 0xFF };
-//                ST7735_WriteData(data, sizeof(data));
-//            } else {
-//                uint8_t data[] = { bgcolor >> 8, bgcolor & 0xFF };
-//                ST7735_WriteData(data, sizeof(data));
-//            }
-//        }
-//    }
-//}
+static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint16_t color, uint16_t bgcolor) {
+   uint32_t i, b, j;
 
-/*
-Simpler (and probably slower) implementation:
+   ST7735_SetAddressWindow(x, y, x+font.width-1, y+font.height-1);
 
-static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint16_t color) {
-    uint32_t i, b, j;
-
-    for(i = 0; i < font.height; i++) {
-        b = font.data[(ch - 32) * font.height + i];
-        for(j = 0; j < font.width; j++) {
-            if((b << j) & 0x8000)  {
-                ST7735_DrawPixel(x + j, y + i, color);
-            } 
-        }
-    }
+   for(i = 0; i < font.height; i++) {
+       b = font.data[(ch - 32) * font.height + i];
+       for(j = 0; j < font.width; j++) {
+           if((b << j) & 0x8000)  {
+               uint8_t data[] = { color >> 8, color & 0xFF };
+               ST7735_WriteData(data, sizeof(data));
+           } else {
+               uint8_t data[] = { bgcolor >> 8, bgcolor & 0xFF };
+               ST7735_WriteData(data, sizeof(data));
+           }
+       }
+   }
 }
-*/
 
-//font.h not included
-//void ST7735_WriteString(uint16_t x, uint16_t y, const char* str, FontDef font, uint16_t color, uint16_t bgcolor) {
-//    ST7735_Select();
-//
-//    while(*str) {
-//        if(x + font.width >= ST7735_WIDTH) {
-//            x = 0;
-//            y += font.height;
-//            if(y + font.height >= ST7735_HEIGHT) {
-//                break;
-//            }
-//
-//            if(*str == ' ') {
-//                // skip spaces in the beginning of the new line
-//                str++;
-//                continue;
-//            }
-//        }
-//
-//        ST7735_WriteChar(x, y, *str, font, color, bgcolor);
-//        x += font.width;
-//        str++;
-//    }
-//
-//    ST7735_Unselect();
-//}
+void ST7735_WriteString(uint16_t x, uint16_t y, const char* str, FontDef font, uint16_t color, uint16_t bgcolor) {
+   ST7735_Select();
+
+   while(*str) {
+       if(x + font.width >= ST7735_WIDTH) {
+           x = 0;
+           y += font.height;
+           if(y + font.height >= ST7735_HEIGHT) {
+               break;
+           }
+
+           if(*str == ' ') {
+               // skip spaces in the beginning of the new line
+               str++;
+               continue;
+           }
+       }
+
+       ST7735_WriteChar(x, y, *str, font, color, bgcolor);
+       x += font.width;
+       str++;
+   }
+
+   ST7735_Unselect();
+}
 
 void ST7735_DrawRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
     // Draw horizontal linesST7735_DrawRectangle
@@ -355,9 +335,10 @@ static void ConvHL(uint8_t *s, int32_t l)
 
 void sendSPI(uint8_t *data, int size)
 {
-	HAL_SPI_Transmit(&hspi1, data, size, HAL_MAX_DELAY);
+	HAL_SPI_Transmit(&ST7735_SPI_PORT, data, size, HAL_MAX_DELAY);
 }
 
+// WIP
 void ST7735_DrawBitmap(uint16_t w, uint16_t h, uint8_t *data) {
 	//HAL_GPIO_WritePin(ST7735_DC_GPIO_Port, ST7735_DC_Pin, GPIO_PIN_SET);
 	//HAL_GPIO_WritePin(ST7735_CS_GPIO_Port, ST7735_CS_Pin, GPIO_PIN_RESET);
@@ -398,7 +379,7 @@ void ST7735_Test() {
     HAL_Delay(END_DELAY);
 
     // Test writing a large amount of text to the screen
-    //ST7735_WriteString(0, 0, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur adipiscing ante sed nibh tincidunt feugiat. Maecenas enim massa, fringilla sed malesuada et, malesuada sit amet turpis. Sed porttitor neque ut ante pretium vitae malesuada nunc bibendum. Nullam aliquet ultrices massa eu hendrerit. Ut sed nisi lorem. In vestibulum purus a tortor imperdiet posuere.", Font_7x10, ST7735_WHITE, ST7735_BLACK);
+    ST7735_WriteString(0, 0, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur adipiscing ante sed nibh tincidunt feugiat. Maecenas enim massa, fringilla sed malesuada et, malesuada sit amet turpis. Sed porttitor neque ut ante pretium vitae malesuada nunc bibendum. Nullam aliquet ultrices massa eu hendrerit. Ut sed nisi lorem. In vestibulum purus a tortor imperdiet posuere.", Font_7x10, ST7735_WHITE, ST7735_BLACK);
     HAL_Delay(END_DELAY);
 
     // Test drawing lines
@@ -424,7 +405,7 @@ void ST7735_Test() {
     HAL_Delay(END_DELAY);
 
     // Test writing strings
-    //ST7735_WriteString(10, 10, "Hello, World!", Font_7x10, ST7735_BLACK, ST7735_WHITE);
+    ST7735_WriteString(10, 10, "Hello, World!", Font_7x10, ST7735_BLACK, ST7735_WHITE);
     HAL_Delay(END_DELAY);
 
     // Test drawing images (assuming you have an image array 'image_data')
