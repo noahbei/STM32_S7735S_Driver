@@ -1,7 +1,7 @@
 #ifndef __ST7735_H__
 #define __ST7735_H__
 
-//#include "fonts.h"
+#include "fonts.h"
 #include "stm32f0xx_hal.h"
 #include <stdbool.h>
 
